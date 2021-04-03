@@ -111,7 +111,7 @@ def create_favorites():
     favorites.user_id = current_user_id
     favorites.name = body['name']
 
-    db.session.add(favorites) # agrega el usuario a la base de datos
+    db.session.add(favorites) # agrega el favorito a la base de datos
     db.session.commit() # guarda los cambios
 
     response_body = {
@@ -130,16 +130,15 @@ def delete_favorites():
         return 'El cuerpo del request es Null', 400
     if 'name' not in body:
         return 'Especificar nombre del favorito', 400
+        
+    name = request.json.get("name")
+    user_favorites_name = Favorites.query.filter_by(user_id=current_user_id, name=name).first()
     
-    favorites = Favorites()
-    favorites.user_id = current_user_id
-    favorites.name = body['name']
-
-    db.session.add(favorites) # agrega el usuario a la base de datos
+    db.session.delete(user_favorites_name) # elimina el favorito de la base de datos
     db.session.commit() # guarda los cambios
 
     response_body = {
-        "msg": "El Favorito ha sido agregado correctamente"
+        "msg": "El Favorito ha sido eliminado correctamente"
     }
 
     return jsonify(response_body), 200
