@@ -114,11 +114,10 @@ def create_favorites():
     db.session.add(favorites) # agrega el favorito a la base de datos
     db.session.commit() # guarda los cambios
 
-    response_body = {
-        "msg": "El Favorito ha sido agregado correctamente"
-    }
+    user_favorites = Favorites.query.filter_by(user_id=current_user_id)
+    user_favorites = list(map(lambda x: x.serialize(), user_favorites))
 
-    return jsonify(response_body), 200
+    return jsonify(user_favorites), 200
 
 @app.route('/favorites', methods=['DELETE'])
 @jwt_required()
@@ -128,20 +127,18 @@ def delete_favorites():
     body = request.get_json()
     if body is None:
         return 'El cuerpo del request es Null', 400
-    if 'name' not in body:
+    if 'id' not in body:
         return 'Especificar nombre del favorito', 400
         
-    name = request.json.get("name")
-    user_favorites_name = Favorites.query.filter_by(user_id=current_user_id, name=name).first()
+    user_favorites_id = Favorites.query.filter_by(user_id=current_user_id, id=body['id']).first()
     
-    db.session.delete(user_favorites_name) # elimina el favorito de la base de datos
+    db.session.delete(user_favorites_id) # elimina el favorito de la base de datos
     db.session.commit() # guarda los cambios
 
-    response_body = {
-        "msg": "El Favorito ha sido eliminado correctamente"
-    }
+    user_favorites = Favorites.query.filter_by(user_id=current_user_id)
+    user_favorites = list(map(lambda x: x.serialize(), user_favorites))
 
-    return jsonify(response_body), 200
+    return jsonify(user_favorites), 200
 
 @app.route("/token", methods=["POST"])
 def create_token():
@@ -155,7 +152,11 @@ def create_token():
     
     # create a new token with the user id inside
     access_token = create_access_token(identity=user.id)
-    return jsonify({ "token": access_token, "user_id": user.id })
+
+    user_favorites = Favorites.query.filter_by(user_id=user.id)
+    user_favorites = list(map(lambda x: x.serialize(), user_favorites))
+
+    return jsonify({ "token": access_token, "user_id": user.id, "favorites": user_favorites})
 
 # this only runs if `$ python src/main.py` is executed
 if __name__ == '__main__':
